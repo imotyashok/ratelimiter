@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
+// Token bucket struct that keeps track of request/token capacity and the rate by which the bucket is refilled
 type TokenBucket struct {
-	// Our token bucket struct that keeps track of request/token capacity
 	mtx         sync.Mutex // our lock for thread safety
 	rate        float64    // tokens added per second
 	max_tokens  float64    // maximum token capacity for our bucket; using float64 instead of int just to prevent the need of casting in the math later
@@ -15,10 +15,15 @@ type TokenBucket struct {
 	lastUpdated time.Time  // last time tokens were updated
 }
 
+// TokenBucket constructor; allows us to pass in any rate we want, and then standardizes it
+// to the rate per second
 func NewTokenBucket(maxOps int, per time.Duration, maxBucketSize int) *TokenBucket {
-	// This constructor allows us to pass in any rate we want, and then standardizes it
-	// to the rate per second
+	// Validation to ensure parameters are valid
+	if maxOps <= 0 || per <= 0 || maxBucketSize <= 0 {
+		panic("invalid rate limiter parameters")
+	}
 
+	// Standardize rate
 	rate := float64(maxOps) / per.Seconds()
 
 	return &TokenBucket{
